@@ -8,25 +8,33 @@ import matplotlib.pyplot as plt
 from pydub import AudioSegment
 
 def openMP3(path):
+    # gets mp3 data from pydub
+    # returns np array of samples averaged over the channels
+    # and the frame rate
     song = AudioSegment.from_mp3(path)
-    return song
+    samples = song.get_array_of_samples()
+    # samples are serialized like [l0, r0, l1, r1, l2, r2, ...]
+    # split into two axes of np array
+    audio = np.array([samples[::2], samples[1::2]])
+    # take average of samples over the two channels
+    audio = np.mean(audio, axis=0)
+    return audio, song.frame_rate
+
+def plotWaveform(audio, rate):
+    f, ax = plt.subplots()
+    N = audio.shape[0]
+    ax.plot(np.arange(N) / rate, audio)
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('Amplitude')
+    plt.show()
 
 def main():
-    AudioSegment.converter = "C:\\libav-i686-w64-mingw32-11.7\\usr\\bin\\avconv"    
-    song = openMP3("01 - Ties That Bind.mp3")
-    print(song.channels, song.sample_width, song.frame_rate, song.frame_width)
-    samples = song.get_array_of_samples()
-    audio = np.array([samples[::2], samples[1::2]])
-    audio = np.mean(audio, axis=0)
-    print(audio.size)
-    N = audio.shape[0]
-    print(N)
-    L = N/song.frame_rate
-    print('Audio length: %.2f seconds'%L)
-
-    f, ax = plt.subplots()
-    ax.plot(np.arange(N) / song.frame_rate, audio)
-    ax.set_xlabel('Time [s]')
-    ax.set_ylabel('Amplitude [unknown]')
-
+    # make sure pydub finds avconv - its finicky
+    converterPath = "C:\\libav-i686-w64-mingw32-11.7\\usr\\bin\\avconv"
+    AudioSegment.converter = converterPath
+    # choose song
+    songPath = "01 - Ties That Bind.mp3"
+    audio, rate = openMP3(songPath)
+    plotWaveform(audio, rate)
+    
 main()
