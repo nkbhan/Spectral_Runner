@@ -3,9 +3,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-# import scipy
+import scipy
 # import pydub
 from pydub import AudioSegment
+from scipy.fftpack import fft
 
 def openMP3(path):
     # gets mp3 data from pydub
@@ -21,11 +22,20 @@ def openMP3(path):
     return audio, song.frame_rate
 
 def plotWaveform(audio, rate):
+    # chunk = 2*1024
     f, ax = plt.subplots()
     N = audio.shape[0]
     ax.plot(np.arange(N) / rate, audio)
+    # ax.plot(np.arange(chunk), audio[:chunk])
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('Amplitude')
+    plt.show()
+
+def plotSpectrum(audio, rate):
+    N = 2
+    chunk = N * 1024
+    spectrum = fft(audio, axis=0)
+    plt.plot(np.abs(spectrum)[:chunk])
     plt.show()
 
 def main():
@@ -35,6 +45,9 @@ def main():
     # choose song
     songPath = "01 - Ties That Bind.mp3"
     audio, rate = openMP3(songPath)
-    plotWaveform(audio, rate)
-    
+    print(rate)
+    # plotWaveform(audio, rate)
+    plotSpectrum(audio, rate)
+    # plotSpectrum(np.sin(2*np.arange(0, 2*2*1024, 2)), 44100)
+
 main()
