@@ -1,3 +1,7 @@
 .vscode/settings.json
 .vscode/tasks.json
 main/01 - Ties That Bind.mp3
+pygame lecture/spaceship.bmp
+pygame lecture/ball.bmp
+pygame lecture/asteroids.png
+pygame lecture/pygame_lecture.py
