@@ -1,7 +1,10 @@
 .vscode/settings.json
 .vscode/tasks.json
-main/01 - Ties That Bind.mp3
+main/Music/01 - Ties That Bind.mp3
+main/Music/05. Luna.mp3
 pygame lecture/spaceship.bmp
 pygame lecture/ball.bmp
 pygame lecture/asteroids.png
 pygame lecture/pygame_lecture.py
+main/__pycache__/audio.cpython-35.pyc
+main/__pycache__/audio_preprocessing.cpython-35.pyc

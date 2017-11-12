@@ -93,7 +93,7 @@ def main():
     converterPath = "C:\\libav-i686-w64-mingw32-11.7\\usr\\bin\\avconv"
     AudioSegment.converter = converterPath
     # choose song
-    songPath = "01 - Ties That Bind.mp3"
+    songPath = "05. Luna.mp3"
     audio, rate = openMP3(songPath)
     print(audio.size, audio.shape, rate)
 
@@ -102,12 +102,13 @@ def main():
     numOfChunks = int(np.ceil(audio.size/chunk))
     shape = (numOfChunks, 1, chunk)
     audio.resize(shape)    
-    print(audio.size, audio.shape)
-    print(audio)
+    # print(audio.size, audio.shape)
+    # print(audio)
 
     spectrum = rfft(audio, n=1024)
     spectrum = np.abs(spectrum)
-    print(spectrum.size, spectrum.shape)
+    # print(spectrum.size, spectrum.shape)
+    return np.log1p(spectrum, where=True)
     # plotSpectrumOverTime(audio, rate)
 
 
@@ -135,4 +136,5 @@ def main():
     # ax2.plot(y2)
     # plt.show()
 
-main()
+if __name__ == "__main__":
+    main()
