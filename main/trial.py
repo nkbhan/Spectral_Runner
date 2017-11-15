@@ -10,7 +10,6 @@ pygame.mixer.music.load(song)
 clock = pygame.time.Clock()
 
 size = width, height = 600, 240
-speed = [1, 1]
 black = 0, 0, 0
 white = (255, 255, 255, 50)
 
