@@ -88,12 +88,11 @@ def plotSpectrumOverTime(audio, rate):
     # plt.show()
     print(num_plots)
 
-def main():
+def main(songPath="Music/05. Luna.mp3"):
     # make sure pydub finds avconv - its finicky
     converterPath = "C:\\libav-i686-w64-mingw32-11.7\\usr\\bin\\avconv"
     AudioSegment.converter = converterPath
     # choose song
-    songPath = "05. Luna.mp3"
     audio, rate = openMP3(songPath)
     print(audio.size, audio.shape, rate)
 

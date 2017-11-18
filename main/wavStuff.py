@@ -4,7 +4,7 @@ import scipy.io.wavfile as sciwave
 import struct
 import array
 
-f = 'Music/Luna.wav'
+f = 'Music/beat.wav'
 CHUNK = 1024
 S16LE = np.dtype("<h") # signed 16 bit little endian bit type
 
@@ -22,10 +22,10 @@ def sciOpen(f, downSample=1):
     # take log(audio + 1)
     # The +1 handles the log(0) case
     # maniuplate signs to avoid logs of negatve numbers
-    signs = np.sign(mono)
-    mono = np.fabs(mono)
-    mono = np.log1p(mono)/np.log(1.5)
-    mono *= signs
+    # signs = np.sign(mono)
+    # mono = np.fabs(mono)
+    # mono = np.log1p(mono)/np.log(1.5)
+    # mono *= signs
     return rate, mono
 
     # oneChunk = np.rint(mono[:CHUNK])
@@ -89,17 +89,3 @@ def getByteData(f):
         data = struct.unpack(unpackFormat, samples)
         print(data)
 
-#https://stackoverflow.com/questions/23154400/read-the-data-of-a-single-channel-from-a-stereo-wave-file-in-python
-def oneChannel(fname, chanIdx):
-    """ list with specified channel's data from multichannel wave with 16-bit data """
-    f = wave.open(fname, 'rb')
-    chans = f.getnchannels()
-    samps = f.getnframes()
-    sampwidth = f.getsampwidth()
-    assert sampwidth == 2
-    s = f.readframes(samps) #read the all the samples from the file into a byte string
-    f.close()
-    unpstr = '<{0}h'.format(samps*chans) #little-endian 16-bit samples
-    print(unpstr)
-    x = list(struct.unpack(unpstr, s)) #convert the byte string into a list of ints
-    return x[chanIdx::chans] #return the desired channel

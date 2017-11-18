@@ -31,7 +31,7 @@ for i in range(numOfRects):
     h = np.random.randint(10, 200)
     rects.append(pygame.Rect(margin+ w*(i+1), height-10-h, w/2, h))
 
-spectrum = audio.main()
+spectrum = audio.main(song)
 numChunks = spectrum.shape[0]
 numSamples = spectrum.shape[2]
 ratio = numSamples/numOfRects
