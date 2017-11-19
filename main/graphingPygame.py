@@ -193,8 +193,8 @@ while running:
                 and energySubBandsVariance[i] > VARIANCELIMIT):
                 beatsPerSubBand[i] += 1
 
-        if index%NUMCHUNKSPERSECOND == 0:
-            print(index/NUMCHUNKSPERSECOND, beatsPerSubBand)
+        # if index%NUMCHUNKSPERSECOND == 0:
+        #     print(index/NUMCHUNKSPERSECOND, beatsPerSubBand)
 
         # if (energySubBands[0] > BEATDETECTIONTHRESHOLD*avgEnergySubBands[0] and
         #     energySubBandsVariance[0] > VARIANCELIMIT):
