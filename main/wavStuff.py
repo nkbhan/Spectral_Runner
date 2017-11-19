@@ -4,13 +4,13 @@ import scipy.io.wavfile as sciwave
 import struct
 import array
 
-f = 'Music/beat.wav'
+f = 'Music/CutAndRun.wav'
 CHUNK = 1024
 S16LE = np.dtype("<h") # signed 16 bit little endian bit type
 
 # downsample must be power of 2
-def sciOpen(f, downSample=1):
-    chunk = int(CHUNK/downSample)
+def sciOpen(f, downSample=1, chunk=CHUNK):
+    chunk = int(chunk/downSample)
     rate, data = sciwave.read(f)
     mono = np.mean(data, axis=1)
     mono = mono.astype(S16LE, copy=False)
