@@ -12,12 +12,19 @@ S16LE = np.dtype("<h") # signed 16 bit little endian bit type
 def sciOpen(f, downSample=1, chunk=CHUNK):
     chunk = int(chunk/downSample)
     rate, data = sciwave.read(f)
-    mono = np.mean(data, axis=1)
-    mono = mono.astype(S16LE, copy=False)
+    if data[0].shape == (2,):
+        mono = np.mean(data, axis=1)
+        mono = mono.astype(S16LE, copy=False)
 
-    numOfChunks = int(np.ceil(mono.size/chunk))
-    shape = (numOfChunks, chunk)
-    mono.resize(shape)
+        numOfChunks = int(np.ceil(mono.size/chunk))
+        shape = (numOfChunks, chunk)
+        mono.resize(shape)
+        return rate, mono
+    else:
+        numOfChunks = int(np.ceil(data.size/chunk))
+        shape = (numOfChunks, chunk)
+        data.resize(shape)
+        return rate, data
 
     # take log(audio + 1)
     # The +1 handles the log(0) case
@@ -26,7 +33,7 @@ def sciOpen(f, downSample=1, chunk=CHUNK):
     # mono = np.fabs(mono)
     # mono = np.log1p(mono)/np.log(1.5)
     # mono *= signs
-    return rate, mono
+    # return rate, mono
 
     # oneChunk = np.rint(mono[:CHUNK])
     # oneChunk = oneChunk.astype(int)
