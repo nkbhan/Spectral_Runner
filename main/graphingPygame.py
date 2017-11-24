@@ -2,7 +2,7 @@ import collections
 import sys
 import pygame
 import wavStuff
-import colors
+from Colors import Colors
 import numpy as np
 import scipy.signal as sig
 import scipy.fftpack as fftpack
@@ -43,9 +43,9 @@ font = pygame.font.Font(None, 30)
 size = width, height = 1000, 600
 fps = round(rate/CHUNK)
 
-bg = colors.black
-teal = colors.blue
-yellow = colors.pink
+bg = Colors.black
+teal = Colors.blue
+yellow = Colors.pink
 
 screen = pygame.display.set_mode(size)
 
@@ -242,7 +242,7 @@ while running:
         pygame.draw.lines(screen, yellow, False, fftPointList, 2)
         # draw bars
         for i in range(CHUNK//NUMFREQSUBBANDS):
-            pygame.draw.line(screen, colors.green, barsBottomPoints[i],
+            pygame.draw.line(screen, Colors.green, barsBottomPoints[i],
                              barsTopPoints[i], 10)
 
         index += 1

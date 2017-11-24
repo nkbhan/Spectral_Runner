@@ -22,3 +22,10 @@ main/Music/ppl.wav
 main/Music/sifflet.wav
 main/Music/sintra.wav
 main/__pycache__/colors.cpython-35.pyc
+main/Images/track_border.png
+main/Images/bg.jpg
+main/Images/background.png
+main/__pycache__/Track.cpython-35.pyc
+main/__pycache__/Player.cpython-35.pyc
+main/__pycache__/Obstacle.cpython-35.pyc
+main/__pycache__/Data.cpython-35.pyc
