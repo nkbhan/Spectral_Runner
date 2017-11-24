@@ -10,7 +10,7 @@ class Track(object):
         self.bottomRight = (data.width*5/6, data.height)
         self.width = self.topRight[0] - self.topLeft[0]
         self.height = data.height
-        self.color = Colors.white
+        self.color = Colors.neonTeal
         self.lanes = 3
         self.linesPerLane = 3
         self.lineHeight = data.height/4

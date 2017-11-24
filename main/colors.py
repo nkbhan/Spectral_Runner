@@ -16,3 +16,9 @@ class Colors(object):
     neonPink = (244, 34, 90)
     neonYellow = (244, 184, 12)
     neonPurple = (143, 42, 163)
+    neonTeal = (13, 255, 215)
+
+    @staticmethod
+    def addAlpha(color, alpha):
+        r, g, b = color
+        return (r, g, b, alpha)

@@ -22,9 +22,9 @@ f = 'Music/CutAndRun.wav'
 pygame.mixer.pre_init(frequency=RATE, size=-16, channels=2, buffer=CHUNK)
 pygame.init()
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 30)
-size = width, height = 1200, 600
-fps = round(RATE/CHUNK)
+font = pygame.font.SysFont('streamster', 20)
+size = width, height = 960, 540
+fps = 60
 screen = pygame.display.set_mode(size)
 
 data = Data.Data()
@@ -33,27 +33,22 @@ data.height = height
 data.obstacles = pygame.sprite.Group()
 data.bg = Colors.black
 data.bg = pygame.image.load("Images/background.png").convert()
-print(data.bg.get_rect())
 data.bg = pygame.transform.scale(data.bg, (data.width, data.height)) 
-print(data.bg.get_rect())
-# Track.Track.init()
 data.track = Track.Track(data)
-data.player = None
 data.players = pygame.sprite.Group()
+data.player = Player.Player(data.width, data.height)
+data.players.add(data.player)
+data.scrollY = 0
+data.score = 0
 
 def leftMouseClicked(x, y, data):
     print("Created obstacle ", end='')
     lane = np.random.randint(0, 3)
-    o = Obstacle.Obstacle(lane, data)
-    print(o.x, o.y, o.rect)
-    data.obstacles.add(o)
+    data.obstacles.add(Obstacle.Obstacle(lane, data))
+    print(data.obstacles.sprites()[-1])
 
 def rightMouseClicked(data):
-    if data.player == None:
-        print("Created player ", end='')
-        data.player = Player.Player(data.width, data.height)
-        data.players.add(data.player)
-        print(data.player)
+    pass
 
 def eventHandler(data):
     global running
@@ -74,14 +69,39 @@ def eventHandler(data):
             running = False
             sys.exit()
 
-running = True
-while running:
-    time = clock.tick(fps)
-    eventHandler(data)
+def moveBackground(data):
+    data.bgRelativeY = data.scrollY % data.bg.get_rect().height
+    data.scrollY += 1
 
-    screen.blit(data.bg, (0,0))
+def drawBackground(screen, data):
+    screen.blit(data.bg, (0, data.bgRelativeY))
+    if data.bgRelativeY + data.bg.get_rect().height > data.height:
+        screen.blit(data.bg, (0, data.bgRelativeY - data.height))
+
+def redrawAll(screen, data):
+    drawBackground(screen, data)
     data.track.draw(screen)
     data.obstacles.draw(screen)
     data.players.draw(screen)
 
+    score = font.render(str(data.score), True, Colors.white)
+    fpsActual = font.render(str(int(clock.get_fps())), True, Colors.white)
+
+    screen.blit(fpsActual, (50, 50))
+    screen.blit(score, (50, 70))
+
+def timerFired(time, data):
+    moveBackground(data)
+    data.obstacles.update(data)
+    for _ in pygame.sprite.groupcollide(data.players, data.obstacles,
+                                        False, True):
+        data.score += 1
+
+running = True
+while running:
+    # controller
+    time = clock.tick(fps)
+    timerFired(time, data)
+    eventHandler(data)
+    redrawAll(screen, data)
     pygame.display.flip()

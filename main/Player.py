@@ -4,7 +4,7 @@ import pygame
 class Player(pygame.sprite.Sprite):
     size = 50
     def __init__(self, screenWidth, screenHeight,
-                 color=Colors.Colors.magenta, lane=1):
+                 color=Colors.Colors.neonPink, lane=1):
         super().__init__()
         self.color = color
         self.size = Player.size
