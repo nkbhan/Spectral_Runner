@@ -4,7 +4,7 @@ import scipy.io.wavfile as sciwave
 import struct
 import array
 
-f = 'Music/ppl.wav'
+f = 'Music/The Seatbelts - Tank.wav'
 CHUNK = 1024
 S16LE = np.dtype("<h") # signed 16 bit little endian bit type
 

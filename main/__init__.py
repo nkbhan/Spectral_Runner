@@ -1,4 +1,9 @@
+# Naren Bhandari, nbhandar
+# 15 112 Term Project
+# MVC layout and modes based on lecture notes on event based animations
+
 import random
+import os
 import sys
 import wavStuff
 import pygame
@@ -12,8 +17,6 @@ from Colors import *
 # constants
 CHUNK = 1024
 RATE = 44100
-
-f = 'Music/CutAndRun.wav'
 
 ###############################################
 # init pygame
@@ -45,6 +48,11 @@ data.mode = "splashScreen"
 data.title = pygame.image.load("Images/title.png")
 data.instructions = pygame.image.load("Images/instructions.png")
 data.running = True
+data.songsPath = "Music"
+data.songNames = [i for i in os.listdir(data.songsPath) \
+                  if not os.path.isdir(data.songsPath + '/' + i)]
+data.songs = [font.render(i[:-4], True, Colors.white) for i in data.songNames]
+data.highlighted = 0
 
 def leftMouseClicked(x, y, data):
     print("Created obstacle ", end='')
@@ -70,6 +78,8 @@ def drawImage(screen, image, cx, cy):
     height = rect[3]
     screen.blit(image, (cx-width/2, cy-height/2))
 
+# Splash Screen Stuff
+
 def splashScreenTimerFired(time, data):
     moveBackground(data)
 
@@ -84,10 +94,12 @@ def splashScreenEventHandler(data):
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                data.mode = "playGame"
+                data.mode = "selectionScreen"
         elif event.type == pygame.QUIT:
             data.running = False
             sys.exit()
+
+# Play Game Mode stuff
 
 def playGameEventHandler(data):
     for event in pygame.event.get():
@@ -126,14 +138,40 @@ def playGameTimerFired(time, data):
                                         False, True):
         data.score += 1
 
+# Selection Screen Stuff
+
 def selectionScreenTimerFired(time, data):
-    pass
+    moveBackground(data)
+
+def drawSongSelections(screen, data):
+    numSongs = len(data.songs)
+    for i, song in enumerate(data.songs):
+        if i == data.highlighted:
+            song = font.render(data.songNames[i][:-4], True, Colors.magenta)
+        screen.blit(song, (data.width/3, i*data.height/numSongs))
+
 
 def selectionScreenRedrawAll(screen, data):
-    pass
+    drawBackground(screen, data)
+    drawSongSelections(screen, data)
+    fpsActual = font.render(str(int(clock.get_fps())), True, Colors.white)
+    screen.blit(fpsActual, (50, 50))
 
 def selectionScreenEventHandler(data):
-    pass
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                data.song = "Music" + '/' + data.songNames[data.highlighted]
+                data.mode = "playGame"
+            elif event.key == pygame.K_DOWN:
+                data.highlighted = min(len(data.songs)-1, data.highlighted+1)
+            elif event.key == pygame.K_UP:
+                data.highlighted = max(0, data.highlighted-1)
+        elif event.type == pygame.QUIT:
+            data.running = False
+            sys.exit()
+
+# mode pickers
 
 def timerFired(time, data):
     if data.mode == "splashScreen":
@@ -160,7 +198,6 @@ def eventHandler(data):
         selectionScreenEventHandler(data)
 
 while data.running:
-    # controller
     time = clock.tick(fps)
     timerFired(time, data)
     eventHandler(data)
