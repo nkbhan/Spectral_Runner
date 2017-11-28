@@ -6,7 +6,7 @@ from Colors import Colors
 import numpy as np
 import scipy.signal as sig
 import scipy.fftpack as fftpack
-
+import threading
 
 ###############################################
 # init song
@@ -142,6 +142,10 @@ bassTextOn = False
 bassTextCounter = 0
 bassTextLimit = 10
 
+def playAudio(audio, index):
+    audioToPlay = pygame.mixer.Sound(audio[index])
+    audioToPlay.play()
+
 while running:
     time = clock.tick(fps)
     for event in pygame.event.get():
@@ -154,8 +158,11 @@ while running:
     if index < numOfChunks:
 
         # play song chunk
-        audioToPlay = pygame.mixer.Sound(audio[index])
-        audioToPlay.play()
+        # audioToPlay = pygame.mixer.Sound(audio[index])
+        # audioToPlay.play()
+        audioThread = threading.Thread(target=playAudio, args=(audio, index))
+        audioThread.daemon = True
+        audioThread.start()
 
         # waveform data
         # take log (and multiply by -1 so that up and down are match pygames)
