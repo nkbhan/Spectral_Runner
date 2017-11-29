@@ -6,18 +6,18 @@ import time
 import pyaudio
 import scipy.io.wavfile as sciwave
 import numpy as np
-from Music import Audio
+from Audio import Audio
 
 
-f = 'Music/Luna by 10 Years.wav'
+f = 'Music/beat.wav'
 audio = Audio(f)
 audio.getBeats()
 
 
-data0 = audio.fluxBins[:,1]
-hist0 = audio.fluxAvgs[:,1]
-delta0 = audio.deltaFlux[:,1]
-beats0 = audio.beats[:,1]
+data0 = audio.fluxBins[:,0]
+hist0 = audio.fluxAvgs[:,0]
+delta0 = audio.deltaFlux[:,0]
+beats0 = audio.beats[:,0]
 data1 = audio.fluxBins[:, 1]
 data2 = audio.fluxBins[:, 2]
 data3 = audio.fluxBins[:, 3]
@@ -42,8 +42,8 @@ fig, ax0 = plt.subplots()
 
 ax0.plot(data0, '-')
 ax0.plot(hist0, '-')
-#ax0.plot(-beats0+delta0, '-')
-#ax0.plot(beats0, '--')
+#ax0.plot(delta0, '-')
+ax0.plot(beats0, '--')
 #ax1.plot(data1, '-')
 #ax2.plot(data2, '-')
 #ax3.plot(data3, '-')

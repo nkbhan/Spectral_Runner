@@ -5,11 +5,10 @@ import pyaudio
 import scipy.io.wavfile as sciwave
 import numpy as np
 
-
 class Audio(object):
     CHUNK = 1024
     FREQS = np.array([22.5, 100, 500, 2000, 4000, 22050])
-    THRESHOLD = 1.5
+    THRESHOLD = 1.6
     def __init__(self, f):
         self.file = f
         self.rate, self.samples = self.getSamples()
@@ -48,7 +47,7 @@ class Audio(object):
         spectrum = np.zeros((self.numChunks, self.CHUNK//2), dtype=complex)
         for i in range(self.numChunks):
             spectrum[i] = self.fftAtChunk(i)
-        return np.abs(spectrum)
+        self.spectrum = np.abs(spectrum)
 
     def freqToIndex(self, freq):
         return (freq*self.CHUNK/self.rate)
@@ -126,6 +125,19 @@ class Audio(object):
         numOfBands = len(self.FREQS)-1
         for i in range(numOfBands):
             self.avgEnergies[i] = sum(self.energyHistories[i])/self.historySize
+
+    def getCurrentIndex(self, time):
+        # time in ms so convert to sec
+        index = int(np.round(time/1000*self.rate/self.CHUNK))
+        return index
+
+    def isBeat(self, index, lastIndex):
+        numOfBands = len(self.FREQS) - 1
+        ans = [0]*numOfBands
+        if index == lastIndex:
+            return ans
+        # return tuple of bools where true marks a beat in the band
+        return self.beats[index, :]
 
 def main():
     f = 'Music/The SeatBelts - Tank.wav'

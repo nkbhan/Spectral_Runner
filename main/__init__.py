@@ -59,6 +59,7 @@ data.songs = [font.render(i[:-4], True, Colors.white) for i in data.songNames]
 data.highlighted = 0
 data.lanes = 3
 data.delay = 3000 # 3 seconds
+data.curIndex = 0
 
 def leftMouseClicked(x, y, data):
     print("Created obstacle ", end='')
@@ -114,6 +115,7 @@ def playSong(data):
 
 def playGameInit(data):
     data.song = Audio(data.song)
+    data.song.getBeats()
     audioThread = threading.Thread(target=playSong, args=(data,))
     audioThread.start()
 
@@ -149,6 +151,14 @@ def playGameRedrawAll(screen, data):
 
 def playGameTimerFired(time, data):
     moveBackground(data)
+    data.lastIndex = data.curIndex
+    data.curIndex = data.song.getCurrentIndex(pygame.mixer.music.get_pos())
+    if data.curIndex < data.song.beats.shape[0]:
+        for i, beat in enumerate(data.song.isBeat(data.curIndex, data.lastIndex)):
+            if beat:
+                lane = int(i*3/5)
+                data.obstacles.add(Obstacle.Obstacle(lane, data))
+
     data.obstacles.update(data)
     for _ in pygame.sprite.groupcollide(data.players, data.obstacles,
                                         False, True):

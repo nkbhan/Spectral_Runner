@@ -9,7 +9,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.lane = lane
         self.size = Obstacle.size
         self.updateXPos(self.lane, data)
-        self.y = self.size
+        self.y = -self.size
         self.vy = 7
 
         self.image = pygame.Surface((Obstacle.size, Obstacle.size))
