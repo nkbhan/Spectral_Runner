@@ -16,6 +16,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect = self.get_rect()
         self.lane = lane
+        self.maxLanes = 2
     
     def get_rect(self):
         left = self.x - self.size/2
@@ -24,7 +25,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dlane, data):
         if dlane == 1:
-            self.lane = min(self.lane+dlane, 2)
+            self.lane = min(self.lane+dlane, self.maxLanes)
         elif dlane == -1:
             self.lane = max(self.lane+dlane, 0)
         self.updateXPos(data)

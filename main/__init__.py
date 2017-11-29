@@ -12,7 +12,10 @@ import Data
 import Obstacle
 import Track
 import Player
+import time
+import threading
 from Colors import *
+from Audio import *
 
 # constants
 CHUNK = 1024
@@ -27,13 +30,14 @@ pygame.init()
 clock = pygame.time.Clock()
 font = pygame.font.SysFont('streamster', 20)
 titleFont = pygame.font.SysFont('streamster', 100)
-size = width, height = 960, 540
-fps = 60
-screen = pygame.display.set_mode(size)
+width, height = 960, 540
 
 data = Data.Data()
 data.width = width
 data.height = height
+data.size = (data.width, data.height)
+data.screen = pygame.display.set_mode(data.size)
+data.fps = 60
 data.obstacles = pygame.sprite.Group()
 data.bg = Colors.black
 data.bg = pygame.image.load("Images/background.png").convert()
@@ -53,10 +57,12 @@ data.songNames = [i for i in os.listdir(data.songsPath) \
                   if not os.path.isdir(data.songsPath + '/' + i)]
 data.songs = [font.render(i[:-4], True, Colors.white) for i in data.songNames]
 data.highlighted = 0
+data.lanes = 3
+data.delay = 3000 # 3 seconds
 
 def leftMouseClicked(x, y, data):
     print("Created obstacle ", end='')
-    lane = np.random.randint(0, 3)
+    lane = np.random.randint(data.lanes)
     data.obstacles.add(Obstacle.Obstacle(lane, data))
     print(data.obstacles.sprites()[-1])
 
@@ -100,6 +106,16 @@ def splashScreenEventHandler(data):
             sys.exit()
 
 # Play Game Mode stuff
+
+def playSong(data):
+    pygame.mixer.music.load(data.song.file)
+    time.sleep(2)
+    pygame.mixer.music.play()
+
+def playGameInit(data):
+    data.song = Audio(data.song)
+    audioThread = threading.Thread(target=playSong, args=(data,))
+    audioThread.start()
 
 def playGameEventHandler(data):
     for event in pygame.event.get():
@@ -163,6 +179,7 @@ def selectionScreenEventHandler(data):
             if event.key == pygame.K_SPACE:
                 data.song = "Music" + '/' + data.songNames[data.highlighted]
                 data.mode = "playGame"
+                playGameInit(data)
             elif event.key == pygame.K_DOWN:
                 data.highlighted = min(len(data.songs)-1, data.highlighted+1)
             elif event.key == pygame.K_UP:
@@ -198,8 +215,9 @@ def eventHandler(data):
         selectionScreenEventHandler(data)
 
 while data.running:
-    time = clock.tick(fps)
-    timerFired(time, data)
+    dtime = clock.tick_busy_loop(data.fps)
+    # print(dtime)
+    timerFired(dtime, data)
     eventHandler(data)
-    redrawAll(screen, data)
+    redrawAll(data.screen, data)
     pygame.display.flip()

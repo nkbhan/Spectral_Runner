@@ -27,9 +27,6 @@ rate, audio = wavStuff.sciOpen(wavStuff.f, chunk=CHUNK)
 # The +1 handles the log(0) case
 # maniuplate signs to avoid logs of negatve numbers
 signs = np.sign(audio)
-logAudio = np.fabs(audio)
-logAudio = np.log1p(logAudio)/np.log(1.2)
-logAudio *= signs
 numOfChunks = audio.size/CHUNK
 
 ###############################################
@@ -69,7 +66,7 @@ spectrumXRange = np.linspace(waveFormX1, waveFormX2, numPoints//2)
 barsXRANGE = np.linspace(waveFormX1, waveFormX2, CHUNK/NUMFREQSUBBANDS)
 
 waveFormY = height/2
-data = -logAudio[0]
+data = -audio[0]
 
 # Use Savitzky-Golay filter to smoothen values
 # wLen is the length of the window the filter uses
@@ -147,7 +144,7 @@ def playAudio(audio, index):
     audioToPlay.play()
 
 while running:
-    time = clock.tick(fps)
+    time = clock.tick_busy_loop(fps)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
