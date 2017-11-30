@@ -2,18 +2,23 @@ import pygame
 import Colors
 
 class Obstacle(pygame.sprite.Sprite):
-    size = 50
+    @staticmethod
+    def init():
+        Obstacle.size = 75
+        Obstacle.vy = 7
+        Obstacle.baseImage = pygame.image.load("Images/tealObstacle.png").convert_alpha()
+
     def __init__(self, lane, data, color=Colors.Colors.neonPurple):
         super().__init__()
 
         self.lane = lane
         self.size = Obstacle.size
-        self.updateXPos(self.lane, data)
         self.y = -self.size
-        self.vy = 7
+        self.updateXPos(data)
 
         self.image = pygame.Surface((Obstacle.size, Obstacle.size))
-        self.image.fill(color)
+        self.image = self.baseImage
+        # self.image.fill(color)
 
         self.rect = self.get_rect()
 
@@ -22,8 +27,9 @@ class Obstacle(pygame.sprite.Sprite):
         top = self.y - self.size/2
         return pygame.Rect(left, top, self.size, self.size)
 
-    def updateXPos(self, lane, data):
-        self.x = data.width/4 + data.width/2 * (1/6 + 2*lane/6)
+    def updateXPos(self, data):
+        self.x = data.width/4 + data.width/2 * (1/6 + 2*self.lane/6)
+        self.rect = self.get_rect()
     
     def updateYPos(self):
         self.y += self.vy

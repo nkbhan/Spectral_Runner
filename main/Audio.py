@@ -1,14 +1,15 @@
 import collections
-import wave
-import time
-import pyaudio
+import pickle
+import os
 import scipy.io.wavfile as sciwave
 import numpy as np
 
 class Audio(object):
     CHUNK = 1024
-    FREQS = np.array([22.5, 100, 500, 2000, 4000, 22050])
-    THRESHOLD = 1.6
+    FREQS = np.array([22.5, 200, 1000, 2500, 6000, 22050])
+    FREQS = np.array([22.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 22050])
+    #                   0    1   2    3    4   5      6      7    8      9      10
+    THRESHOLD = 2
     def __init__(self, f):
         self.file = f
         self.rate, self.samples = self.getSamples()
@@ -50,7 +51,7 @@ class Audio(object):
         self.spectrum = np.abs(spectrum)
 
     def freqToIndex(self, freq):
-        return (freq*self.CHUNK/self.rate)
+        return freq*self.CHUNK/self.rate
 
     def getFreqIndeces(self):
         return np.round((self.FREQS*self.CHUNK/self.rate))
@@ -78,6 +79,7 @@ class Audio(object):
         self.fluxBins = fluxBins
 
     def getFluxAvgs(self):
+        # maxes = [np.max(self.fluxBins[:, i]) for i in range(len(self.fluxBins[0]))]
         for curChunk in range(self.numChunks):
             start = max(0, curChunk - self.historySize)
             end = min(self.numChunks - 1, curChunk + self.historySize)
@@ -100,10 +102,14 @@ class Audio(object):
                     self.beats[chunk][binIndex] = self.deltaFlux[chunk][binIndex]
 
     def getBeats(self):
-        self.getSpectralFlux()
-        self.getFluxAvgs()
-        self.getInstantFluxMinusAvgFlux()
-        self.findBeatsInFlux()
+        if self.beatsDataExists():
+            self.loadBeatsData()
+        else:
+            self.getSpectralFlux()
+            self.getFluxAvgs()
+            self.getInstantFluxMinusAvgFlux()
+            self.findBeatsInFlux()
+            self.saveBeatsData()
 
     def energiesAtChunk(self, index):
         numOfBands = len(self.FREQS)-1
@@ -134,10 +140,29 @@ class Audio(object):
     def isBeat(self, index, lastIndex):
         numOfBands = len(self.FREQS) - 1
         ans = [0]*numOfBands
-        if index == lastIndex:
+        if index == lastIndex or index >= self.samples.shape[0]:
             return ans
         # return tuple of bools where true marks a beat in the band
         return self.beats[index, :]
+
+    def getName(self):
+        return self.file[6:-4]
+        
+    def getDataFileName(self):
+        return 'Data/' + self.getName() + '.pkl'
+
+    def saveBeatsData(self):
+        dataFileName = self.getDataFileName()
+        with open(dataFileName, 'wb') as pickleFile:
+            pickle.dump(self.beats, pickleFile)
+
+    def loadBeatsData(self):
+        dataFileName = self.getDataFileName()
+        with open(dataFileName, 'rb') as pickleFile:
+            self.beats = pickle.load(pickleFile)
+
+    def beatsDataExists(self):
+        return os.path.isfile(self.getDataFileName())
 
 def main():
     f = 'Music/The SeatBelts - Tank.wav'

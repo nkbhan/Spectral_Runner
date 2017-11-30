@@ -16,6 +16,7 @@ import time
 import threading
 from Colors import *
 from Audio import *
+from Explosion import Explosion
 
 # constants
 CHUNK = 1024
@@ -28,7 +29,7 @@ RATE = 44100
 pygame.mixer.pre_init(frequency=RATE, size=-16, channels=2, buffer=CHUNK)
 pygame.init()
 clock = pygame.time.Clock()
-font = pygame.font.SysFont('streamster', 20)
+font = pygame.font.SysFont('moreperfectdosvga', 25)
 titleFont = pygame.font.SysFont('streamster', 100)
 width, height = 960, 540
 
@@ -38,9 +39,12 @@ data.height = height
 data.size = (data.width, data.height)
 data.screen = pygame.display.set_mode(data.size)
 data.fps = 60
+Obstacle.Obstacle.init()
 data.obstacles = pygame.sprite.Group()
+Explosion.init()
+data.explosions = pygame.sprite.Group()
 data.bg = Colors.black
-data.bg = pygame.image.load("Images/background.png").convert()
+data.bg = pygame.image.load("Images/background4.png").convert()
 data.bg = pygame.transform.scale(data.bg, (data.width, data.height)) 
 data.track = Track.Track(data)
 data.players = pygame.sprite.Group()
@@ -55,10 +59,11 @@ data.running = True
 data.songsPath = "Music"
 data.songNames = [i for i in os.listdir(data.songsPath) \
                   if not os.path.isdir(data.songsPath + '/' + i)]
-data.songs = [font.render(i[:-4], True, Colors.white) for i in data.songNames]
+data.songs = [font.render(i[:-4], False, Colors.white) for i in data.songNames]
 data.highlighted = 0
 data.lanes = 3
-data.delay = 3000 # 3 seconds
+data.delay = 3000 # in ms,  3 seconds
+data.songGameOffset = .75 # in seconds
 data.curIndex = 0
 
 def leftMouseClicked(x, y, data):
@@ -109,15 +114,22 @@ def splashScreenEventHandler(data):
 # Play Game Mode stuff
 
 def playSong(data):
+    pygame.mixer.music.set_endevent(pygame.USEREVENT)
     pygame.mixer.music.load(data.song.file)
-    time.sleep(2)
+    time.sleep(data.delay/1000)
     pygame.mixer.music.play()
 
 def playGameInit(data):
+    dist = data.player.y + Obstacle.Obstacle.size
+    speed = data.fps * Obstacle.Obstacle.vy
+    timeToGoDown = dist/speed
+    print(dist, speed, timeToGoDown, dist/(data.songGameOffset*data.fps))
+    Obstacle.Obstacle.vy = dist/(data.songGameOffset*data.fps)
     data.song = Audio(data.song)
     data.song.getBeats()
     audioThread = threading.Thread(target=playSong, args=(data,))
     audioThread.start()
+    data.playStartTime = time.time()
 
 def playGameEventHandler(data):
     for event in pygame.event.get():
@@ -133,6 +145,8 @@ def playGameEventHandler(data):
             elif event.key == pygame.K_LEFT:
                 if data.player:
                     data.player.update(-1, data)
+        elif event.type == pygame.USEREVENT:
+            data.mode = "splashScreen"
         elif event.type == pygame.QUIT:
             data.running = False
             sys.exit()
@@ -142,27 +156,42 @@ def playGameRedrawAll(screen, data):
     data.track.draw(screen)
     data.obstacles.draw(screen)
     data.players.draw(screen)
+    data.explosions.draw(screen)
 
     score = font.render(str(data.score), True, Colors.white)
     fpsActual = font.render(str(int(clock.get_fps())), True, Colors.white)
 
+    if data.curIndex:
+        index = font.render(str(data.curIndex), False, Colors.white)
+        screen.blit(index, (50, 90))
+        t = font.render("%.2f"%(pygame.mixer.music.get_pos()/1000), False, Colors.white)
+        screen.blit(t, (50, 110))
     screen.blit(fpsActual, (50, 50))
     screen.blit(score, (50, 70))
 
-def playGameTimerFired(time, data):
+def playGameTimerFired(dt, data):
     moveBackground(data)
-    data.lastIndex = data.curIndex
-    data.curIndex = data.song.getCurrentIndex(pygame.mixer.music.get_pos())
-    if data.curIndex < data.song.beats.shape[0]:
-        for i, beat in enumerate(data.song.isBeat(data.curIndex, data.lastIndex)):
-            if beat:
-                lane = int(i*3/5)
-                data.obstacles.add(Obstacle.Obstacle(lane, data))
+    data.explosions.update()
+    if time.time() - data.playStartTime > data.songGameOffset:
+        data.lastIndex = data.curIndex
+        data.curIndex = data.song.getCurrentIndex(pygame.mixer.music.get_pos() + 
+                                                data.songGameOffset*1000)
+        if data.curIndex > data.lastIndex:
+            for i, beat in enumerate(data.song.isBeat(data.curIndex, data.lastIndex)):
+                if beat and i in [0, 4, 9]:
+                    if i == 0: lane = 0
+                    elif i == 4: lane = 1
+                    elif i == 9: lane = 2
+                    data.obstacles.add(Obstacle.Obstacle(lane, data))
 
-    data.obstacles.update(data)
-    for _ in pygame.sprite.groupcollide(data.players, data.obstacles,
-                                        False, True):
-        data.score += 1
+        data.obstacles.update(data)
+        for player in pygame.sprite.groupcollide(data.players, data.obstacles,
+                                            False, True):
+            player.turnOn()
+            data.explosions.add(Explosion(player.x, player.y))
+            data.score += 1
+        for player in data.players:
+            player.updateTimer()
 
 # Selection Screen Stuff
 
