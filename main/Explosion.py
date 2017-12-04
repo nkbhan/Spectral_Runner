@@ -4,9 +4,10 @@ class Explosion(pygame.sprite.Sprite):
     @staticmethod
     def init():
         Explosion.frames = []
+        #light_004[1]
         image = pygame.image.load("Images/light_004[1].png").convert_alpha()
         width, height = image.get_size()
-        rows = cols = 5
+        rows, cols = 5, 5
         Explosion.frameWidth, Explosion.frameHeight = width/cols, height/rows
         for row in range(rows):
             for col in range(cols):

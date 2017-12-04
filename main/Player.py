@@ -2,25 +2,30 @@ import Colors
 import pygame
 
 class Player(pygame.sprite.Sprite):
-    size = 75
-    def __init__(self, screenWidth, screenHeight,
-                 color=Colors.Colors.neonPink, lane=1):
-        super().__init__()
-        self.color = color
-        self.size = Player.size
-        self.x = screenWidth/2
-        self.y = screenHeight - self.size
-        self.imageOn = pygame.image.load("Images/pinkDrumOn.png").convert_alpha()
-        self.imageOff = pygame.image.load("Images/pinkDrumOff.png").convert_alpha()
-        self.image = self.imageOff
-        # self.image = pygame.Surface((self.size, self.size))
-        # self.image.fill(color)
+    @staticmethod
+    def init(data):
+        Player.size = 75
+        Player.y = data.height - Player.size
+        Player.pinkOn = pygame.image.load("Images/pinkDrumOn.png").convert_alpha()
+        Player.pinkOff = pygame.image.load("Images/pinkDrumOff.png").convert_alpha()
+        Player.tealOn = pygame.image.load("Images/tealDrumOn.png").convert_alpha()
+        Player.tealOff = pygame.image.load("Images/tealDrumOff.png").convert_alpha()
+        Player.yellowOn = pygame.image.load("Images/yellowDrumOn.png").convert_alpha()
+        Player.yellowOff = pygame.image.load("Images/yellowDrumOff.png").convert_alpha()
+        Player.OnImgs = [Player.pinkOn, Player.tealOn, Player.yellowOn]
+        Player.OffImgs = [Player.pinkOff, Player.tealOff, Player.yellowOff]
 
-        self.rect = self.get_rect()
+    def __init__(self, data, lane=1):
+        super().__init__()
         self.lane = lane
+        self.x = data.width/4 + data.width/2 * (1/6 + 2*self.lane/6)
+        self.imageOn = self.OnImgs[lane]
+        self.imageOff = self.OffImgs[lane]
+        self.image = self.imageOff
+        self.rect = self.get_rect()
         self.maxLanes = 2
         self.isOn = False
-        self.onTime = 10
+        self.onTime = 5
         self.onTimer = self.onTime
     
     def get_rect(self):

@@ -6,9 +6,14 @@ class Obstacle(pygame.sprite.Sprite):
     def init():
         Obstacle.size = 75
         Obstacle.vy = 7
-        Obstacle.baseImage = pygame.image.load("Images/tealObstacle.png").convert_alpha()
+        Obstacle.pinkImage = pygame.image.load("Images/pinkObstacle.png").convert_alpha()
+        Obstacle.tealImage = pygame.image.load("Images/tealObstacle.png").convert_alpha()
+        Obstacle.yellowImage = pygame.image.load("Images/yellowObstacle.png").convert_alpha()
+        Obstacle.baseImages = [Obstacle.pinkImage,
+                               Obstacle.tealImage,
+                               Obstacle.yellowImage]
 
-    def __init__(self, lane, data, color=Colors.Colors.neonPurple):
+    def __init__(self, lane, data):
         super().__init__()
 
         self.lane = lane
@@ -17,7 +22,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.updateXPos(data)
 
         self.image = pygame.Surface((Obstacle.size, Obstacle.size))
-        self.image = self.baseImage
+        self.image = self.baseImages[self.lane]
         # self.image.fill(color)
 
         self.rect = self.get_rect()

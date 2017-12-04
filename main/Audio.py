@@ -1,12 +1,15 @@
 import collections
 import pickle
 import os
+import pygame
+import Player
 import scipy.io.wavfile as sciwave
+import scipy.signal as sig
 import numpy as np
+from Colors import *
 
 class Audio(object):
     CHUNK = 1024
-    FREQS = np.array([22.5, 200, 1000, 2500, 6000, 22050])
     FREQS = np.array([22.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 22050])
     #                   0    1   2    3    4   5      6      7    8      9      10
     THRESHOLD = 2
@@ -86,6 +89,9 @@ class Audio(object):
             for binIndex in range(len(self.fluxBins[0])):
                 self.fluxAvgs[curChunk][binIndex] = \
                     self.THRESHOLD*np.mean(self.fluxBins[start:end, binIndex])
+                    #+  self.THRESHOLD_CONST
+        for binIndex in range(len(self.fluxBins[0])):
+            self.fluxAvgs[:, binIndex] += np.max(self.fluxAvgs[:, binIndex])/10
 
     def getInstantFluxMinusAvgFlux(self):
         deltaFlux = self.fluxBins - self.fluxAvgs
@@ -130,19 +136,18 @@ class Audio(object):
     def getAvgEnergyHistory(self):
         numOfBands = len(self.FREQS)-1
         for i in range(numOfBands):
-            self.avgEnergies[i] = sum(self.energyHistories[i])/self.historySize
+            self.avgEnergies[i] = \
+                sum(self.energyHistories[i])/self.historySize
 
     def getCurrentIndex(self, time):
         # time in ms so convert to sec
         index = int(np.round(time/1000*self.rate/self.CHUNK))
         return index
 
-    def isBeat(self, index, lastIndex):
+    def isBeat(self, index):
         numOfBands = len(self.FREQS) - 1
-        ans = [0]*numOfBands
-        if index == lastIndex or index >= self.samples.shape[0]:
-            return ans
-        # return tuple of bools where true marks a beat in the band
+        if  index >= self.samples.shape[0]:
+            return [0]*numOfBands
         return self.beats[index, :]
 
     def getName(self):
@@ -152,17 +157,44 @@ class Audio(object):
         return 'Data/' + self.getName() + '.pkl'
 
     def saveBeatsData(self):
+        data = (self.samples, self.fluxBins, self.fluxAvgs,
+                self.deltaFlux, self.beats)
         dataFileName = self.getDataFileName()
         with open(dataFileName, 'wb') as pickleFile:
-            pickle.dump(self.beats, pickleFile)
+            pickle.dump(data, pickleFile)
 
     def loadBeatsData(self):
         dataFileName = self.getDataFileName()
         with open(dataFileName, 'rb') as pickleFile:
-            self.beats = pickle.load(pickleFile)
+            data = pickle.load(pickleFile)
+        self.samples, self.fluxBins, self.fluxAvgs, self.deltaFlux, self.beats = data
 
     def beatsDataExists(self):
         return os.path.isfile(self.getDataFileName())
+
+    def drawWaveform(self, screen, data,):
+        if data.curIndex < self.samples.shape[0]:
+            x1 = data.width/6
+            x2 = data.width*5/6
+            XRange = np.linspace(x1, x2, self.CHUNK)
+            scale = 500
+
+            # Use Savitzky-Golay filter to smoothen values
+            # wLen is the length of the window the filter uses
+            # polyOrder is the order of the polynomial the filter uses
+            numOfWindowsMinusOne = 5
+            wLen = self.CHUNK//numOfWindowsMinusOne-1 # must be odd
+            polyOrder = 1
+
+
+            samples = -self.samples[data.curIndex]/scale
+            samples *= self.window        
+            # samples = sig.savgol_filter(samples, wLen, polyOrder)
+            # samples = sig.savgol_filter(samples, wLen, polyOrder)
+            samples += Player.Player.y
+            pointList = [(XRange[i], samples[i]) for i in range(self.CHUNK)]
+            
+            pygame.draw.lines(screen, Colors.neonPink, False, pointList, 2)
 
 def main():
     f = 'Music/The SeatBelts - Tank.wav'

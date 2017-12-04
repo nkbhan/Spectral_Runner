@@ -30,7 +30,9 @@ pygame.mixer.pre_init(frequency=RATE, size=-16, channels=2, buffer=CHUNK)
 pygame.init()
 clock = pygame.time.Clock()
 font = pygame.font.SysFont('moreperfectdosvga', 25)
-titleFont = pygame.font.SysFont('streamster', 100)
+bigFont = pygame.font.SysFont('moreperfectdosvga', 35)
+biggerFont = pygame.font.SysFont('moreperfectdosvga', 50)
+
 width, height = 960, 540
 
 data = Data.Data()
@@ -47,12 +49,15 @@ data.bg = Colors.black
 data.bg = pygame.image.load("Images/background4.png").convert()
 data.bg = pygame.transform.scale(data.bg, (data.width, data.height)) 
 data.track = Track.Track(data)
-data.players = pygame.sprite.Group()
-data.player = Player.Player(data.width, data.height)
-data.players.add(data.player)
+Player.Player.init(data)
+data.players = pygame.sprite.GroupSingle()
+data.leftPlayers = pygame.sprite.GroupSingle()
+data.midPlayers = pygame.sprite.GroupSingle()
+data.rightPlayers = pygame.sprite.GroupSingle()
 data.scrollY = 0
 data.score = 0
 data.mode = "splashScreen"
+data.gameModes = ["Drum Mode", "Groove Mode"]
 data.title = pygame.image.load("Images/title.png")
 data.instructions = pygame.image.load("Images/instructions.png")
 data.running = True
@@ -65,6 +70,9 @@ data.lanes = 3
 data.delay = 3000 # in ms,  3 seconds
 data.songGameOffset = .75 # in seconds
 data.curIndex = 0
+data.lastLane = 0
+data.lastIndexObstacleAdded = 0
+data.indecesBetweenObstacles = 10
 
 def leftMouseClicked(x, y, data):
     print("Created obstacle ", end='')
@@ -90,7 +98,9 @@ def drawImage(screen, image, cx, cy):
     height = rect[3]
     screen.blit(image, (cx-width/2, cy-height/2))
 
+########################
 # Splash Screen Stuff
+########################
 
 def splashScreenTimerFired(time, data):
     moveBackground(data)
@@ -106,12 +116,14 @@ def splashScreenEventHandler(data):
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                data.mode = "selectionScreen"
+                data.mode = "chooseGameMode"
         elif event.type == pygame.QUIT:
             data.running = False
             sys.exit()
 
+########################
 # Play Game Mode stuff
+#######################
 
 def playSong(data):
     pygame.mixer.music.set_endevent(pygame.USEREVENT)
@@ -120,39 +132,48 @@ def playSong(data):
     pygame.mixer.music.play()
 
 def playGameInit(data):
-    dist = data.player.y + Obstacle.Obstacle.size
+    dist = Player.Player.y + Obstacle.Obstacle.size
     speed = data.fps * Obstacle.Obstacle.vy
     timeToGoDown = dist/speed
-    print(dist, speed, timeToGoDown, dist/(data.songGameOffset*data.fps))
     Obstacle.Obstacle.vy = dist/(data.songGameOffset*data.fps)
     data.song = Audio(data.song)
     data.song.getBeats()
     audioThread = threading.Thread(target=playSong, args=(data,))
     audioThread.start()
     data.playStartTime = time.time()
+    if data.gameMode == "Drum Mode":
+        drumModeInit(data)
+    elif data.gameMode == "Groove Mode":
+        grooveModeInit(data)
 
-def playGameEventHandler(data):
+def grooveModeInit(data):
+    data.players.empty()
+    data.leftPlayers.empty()
+    data.midPlayers.empty()
+    data.rightPlayers.empty()
+    player = Player.Player(data, 0) # for pink color
+    player.lane = 1 # move to middle
+    data.players.add(player)
+
+def grooveModeEventHandler(data):
+    player = data.players.sprite
     for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                leftMouseClicked(*(event.pos), data)
-            elif event.button == 3:
-                rightMouseClicked(data)
-        elif event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                if data.player:
-                    data.player.update(1, data)
+                if player:
+                    player.update(1, data)
             elif event.key == pygame.K_LEFT:
-                if data.player:
-                    data.player.update(-1, data)
+                if player:
+                    player.update(-1, data)
         elif event.type == pygame.USEREVENT:
             data.mode = "splashScreen"
         elif event.type == pygame.QUIT:
             data.running = False
             sys.exit()
 
-def playGameRedrawAll(screen, data):
+def grooveModeRedrawAll(screen, data):
     drawBackground(screen, data)
+    data.song.drawWaveform(screen, data)
     data.track.draw(screen)
     data.obstacles.draw(screen)
     data.players.draw(screen)
@@ -169,7 +190,7 @@ def playGameRedrawAll(screen, data):
     screen.blit(fpsActual, (50, 50))
     screen.blit(score, (50, 70))
 
-def playGameTimerFired(dt, data):
+def grooveModeTimerFired(dt, data):
     moveBackground(data)
     data.explosions.update()
     if time.time() - data.playStartTime > data.songGameOffset:
@@ -177,23 +198,108 @@ def playGameTimerFired(dt, data):
         data.curIndex = data.song.getCurrentIndex(pygame.mixer.music.get_pos() + 
                                                 data.songGameOffset*1000)
         if data.curIndex > data.lastIndex:
-            for i, beat in enumerate(data.song.isBeat(data.curIndex, data.lastIndex)):
-                if beat and i in [0, 4, 9]:
-                    if i == 0: lane = 0
-                    elif i == 4: lane = 1
-                    elif i == 9: lane = 2
-                    data.obstacles.add(Obstacle.Obstacle(lane, data))
+            beats = data.song.isBeat(data.curIndex)
+            # add an obstacle to course
+            if beats[4] or beats[5]:
+                lane = random.randint(0,data.lanes-1)
+                data.obstacles.add(Obstacle.Obstacle(lane, data))
 
-        data.obstacles.update(data)
+        # check collisions
         for player in pygame.sprite.groupcollide(data.players, data.obstacles,
-                                            False, True):
+                                                 False, True):
             player.turnOn()
             data.explosions.add(Explosion(player.x, player.y))
             data.score += 1
+
+        #update sprites
         for player in data.players:
             player.updateTimer()
+        data.obstacles.update(data)
 
+##########################
+# Drum mode
+##########################
+
+def drumModeInit(data):
+    data.players.empty()
+    data.leftPlayers.empty()
+    data.midPlayers.empty()
+    data.rightPlayers.empty()
+    data.leftPlayers.add(Player.Player(data, 0))
+    data.midPlayers.add(Player.Player(data, 1))
+    data.rightPlayers.add(Player.Player(data, 2))
+
+def drumModeDrumHit(data, players):
+    for player in players:
+        player.turnOn()
+    collision = pygame.sprite.groupcollide(players, data.obstacles, False,
+                                           True)
+    for player in collision:
+        data.explosions.add(Explosion(player.x, player.y))
+        data.score += 1
+
+def drumModeEventHandler(data):
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                drumModeDrumHit(data, data.rightPlayers)
+            elif event.key == pygame.K_LEFT:
+                drumModeDrumHit(data, data.leftPlayers)
+            elif event.key == pygame.K_DOWN or event.key == pygame.K_SPACE:
+                drumModeDrumHit(data, data.midPlayers)
+        elif event.type == pygame.USEREVENT:
+            data.mode = "splashScreen"
+        elif event.type == pygame.QUIT:
+            data.running = False
+            sys.exit()
+
+def drumModeRedrawAll(screen, data):
+    drawBackground(screen, data)
+    data.song.drawWaveform(screen, data)
+    data.track.draw(screen)
+    data.obstacles.draw(screen)
+    data.leftPlayers.draw(screen)
+    data.midPlayers.draw(screen)
+    data.rightPlayers.draw(screen)
+    data.explosions.draw(screen)
+
+    score = font.render(str(data.score), True, Colors.white)
+    fpsActual = font.render(str(int(clock.get_fps())), True, Colors.white)
+
+    if data.curIndex:
+        index = font.render(str(data.curIndex), False, Colors.white)
+        screen.blit(index, (50, 90))
+        t = font.render("%.2f"%(pygame.mixer.music.get_pos()/1000), False, Colors.white)
+        screen.blit(t, (50, 110))
+    screen.blit(fpsActual, (50, 50))
+    screen.blit(score, (50, 70))
+
+def drumModeTimerFired(dt, data):
+    moveBackground(data)
+    data.explosions.update()
+    if time.time() - data.playStartTime > data.songGameOffset:
+        data.lastIndex = data.curIndex
+        data.curIndex = data.song.getCurrentIndex(pygame.mixer.music.get_pos() + 
+                                                data.songGameOffset*1000)
+        if data.curIndex > data.lastIndex:
+            beats = data.song.isBeat(data.curIndex)
+            #bass drum...
+            if beats[1]:
+                data.obstacles.add(Obstacle.Obstacle(0, data))
+            #snare
+            if beats[5]:
+                data.obstacles.add(Obstacle.Obstacle(1, data))
+            # hi hats etc
+            if beats[8]:
+                data.obstacles.add(Obstacle.Obstacle(2, data))
+        data.obstacles.update(data)
+        for players in [data.leftPlayers, data.midPlayers, data.rightPlayers]:
+            for player in players:
+                player.updateTimer()
+
+############################
 # Selection Screen Stuff
+############################
 
 def selectionScreenTimerFired(time, data):
     moveBackground(data)
@@ -204,7 +310,6 @@ def drawSongSelections(screen, data):
         if i == data.highlighted:
             song = font.render(data.songNames[i][:-4], True, Colors.magenta)
         screen.blit(song, (data.width/3, i*data.height/numSongs))
-
 
 def selectionScreenRedrawAll(screen, data):
     drawBackground(screen, data)
@@ -217,12 +322,54 @@ def selectionScreenEventHandler(data):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 data.song = "Music" + '/' + data.songNames[data.highlighted]
-                data.mode = "playGame"
+                data.mode = data.gameMode
+                data.highlighted = 0
                 playGameInit(data)
             elif event.key == pygame.K_DOWN:
                 data.highlighted = min(len(data.songs)-1, data.highlighted+1)
             elif event.key == pygame.K_UP:
                 data.highlighted = max(0, data.highlighted-1)
+        elif event.type == pygame.QUIT:
+            data.running = False
+            sys.exit()
+
+
+##########################
+# chhose game mode screen
+##########################
+
+def chooseGameModeScreenTimerFired(time, data):
+    moveBackground(data)
+
+def drawGameModeChoice(screen, data):
+    chooseModeText = biggerFont.render("Choose a Game Mode", True, Colors.white)
+    screen.blit(chooseModeText, (data.width/10, data.height/10))
+    for i in range(len(data.gameModes)):
+        if i == data.highlighted:
+            choice = bigFont.render(data.gameModes[i], True, Colors.magenta)
+        else:
+            choice = bigFont.render(data.gameModes[i], True, Colors.white)
+        x = data.width/4
+        y = data.height/3 + data.height/4*i
+        screen.blit(choice, (x, y))
+
+def chooseGameModeScreenRedrawAll(screen, data):
+    drawBackground(screen, data)
+    drawGameModeChoice(screen, data)
+    fpsActual = font.render(str(int(clock.get_fps())), True, Colors.white)
+    screen.blit(fpsActual, (50, 50))
+
+def chooseGameModeScreenEventHandler(data):
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                data.gameMode = data.gameModes[data.highlighted]
+                data.highlighted = 0
+                data.mode = "selectionScreen"
+            elif event.key == pygame.K_DOWN:
+                data.highlighted = 1
+            elif event.key == pygame.K_UP:
+                data.highlighted = 0
         elif event.type == pygame.QUIT:
             data.running = False
             sys.exit()
@@ -236,6 +383,12 @@ def timerFired(time, data):
         playGameTimerFired(time, data)
     elif data.mode == "selectionScreen":
         selectionScreenTimerFired(time, data)
+    elif data.mode == "chooseGameMode":
+        chooseGameModeScreenTimerFired(time, data)
+    elif data.mode == "Drum Mode":
+        drumModeTimerFired(time, data)
+    elif data.mode == "Groove Mode":
+        grooveModeTimerFired(time, data)
 
 def redrawAll(screen, data):
     if data.mode == "splashScreen":
@@ -244,6 +397,12 @@ def redrawAll(screen, data):
         playGameRedrawAll(screen, data)
     elif data.mode == "selectionScreen":
         selectionScreenRedrawAll(screen, data)
+    elif data.mode == "chooseGameMode":
+        chooseGameModeScreenRedrawAll(screen, data)
+    elif data.mode == "Drum Mode":
+        drumModeRedrawAll(screen, data)
+    elif data.mode == "Groove Mode":
+        grooveModeRedrawAll(screen, data)
 
 def eventHandler(data):
     if data.mode == "splashScreen":
@@ -252,6 +411,12 @@ def eventHandler(data):
         playGameEventHandler(data)
     elif data.mode == "selectionScreen":
         selectionScreenEventHandler(data)
+    elif data.mode == "chooseGameMode":
+        chooseGameModeScreenEventHandler(data)
+    elif data.mode == "Drum Mode":
+        drumModeEventHandler(data)
+    elif data.mode == "Groove Mode":
+        grooveModeEventHandler(data)
 
 while data.running:
     dtime = clock.tick_busy_loop(data.fps)
