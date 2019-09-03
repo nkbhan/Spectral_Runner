@@ -81,7 +81,7 @@ Inspired by Audio Surf and Guitar Hero
 
 MVC game loop design inspired by 112 lecture notes
 
-Songs included
+Songs I tested on:
 
 * *Accelerated* by Miami Nights 1984
 * *Books of War* by MF Doom ft. RZA
@@ -98,3 +98,5 @@ Songs included
 * *Teen Pregnancy* by Blank Banshee
 * *Ties That Bind* by Alter Bridge
 * *Time Flies* by Porcupine Tree
+
+Feel free to put `.wav` files in the `main/Music` directory to try it out
