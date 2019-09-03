@@ -13,9 +13,9 @@ You will need to install
 * Pygame
 
 You can use `pip` to install these as follows
-
-    pip install numpy scipy pygame
-
+```
+pip install numpy scipy pygame
+```
 Also, install the font called `MorePerfectDOSVGA.ttf` by opening the `Fonts` folder and opening the ttf file and following the instructions.
 
 ## About 
@@ -36,11 +36,11 @@ Pick a mode, pick a song, and go!
 
 #### Groove Mode
 
-Use the arrow keys to move the player left and right. Hit as many blocks as you can in a row. The longer your streak the more bonus points you get.
+Use the arrow keys to move the player left and right. Hit as many blocks as you can in a row. The longer your streak the more bonus points you get. Press escape to go back to title screen.
 
 #### Drum Mode
 Use the arrow keys (left, down, right) corresponding to the different player objects to hit the falling blocks in time with the music. Try and time the clicks correctly. If you are off and miss a block, you lose out on bonus points. Like above, the longer your streak, the more bonus point syou get.
-Be warned, this mode is **much harder**, so git gud. 
+Be warned, this mode is **much harder**, so git gud. Press escape to go back to title screen.
 
 
 ## Beat Detection
@@ -64,6 +64,9 @@ External Modules used:
 * Pygame
 * Numpy
 * Scipy
+
+Background image is a modified form of\
+[https://www.toptal.com/designers/subtlepatterns/patterns/footer_lodyas.png](https://www.toptal.com/designers/subtlepatterns/patterns/footer_lodyas.png)
 
 explosion sprite sheet from\
 [https://mrbubblewand.wordpress.com/](https://mrbubblewand.wordpress.com/)
