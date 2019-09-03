@@ -1,9 +1,16 @@
+"""
+Player.py
+
+contains player class for handling player sprites
+"""
+
 import Colors
 import pygame
 
 class Player(pygame.sprite.Sprite):
     @staticmethod
     def init(data):
+        # initialize all the images and what not
         Player.size = 75
         Player.y = data.height - Player.size
         Player.pinkOn = pygame.image.load("Images/pinkDrumOn.png").convert_alpha()
@@ -41,6 +48,8 @@ class Player(pygame.sprite.Sprite):
         self.updateXPos(data)
         
     def updateTimer(self):
+        # on image only last for limited time, 5 frames
+        # switch off after that
         if self.isOn:
             self.onTimer -= 1
             if self.onTimer <= 0:
@@ -53,8 +62,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.get_rect()
 
     def turnOn(self):
+        # switch to on image
         self.isOn = True
         self.image = self.imageOn
-
-    # def move(self, start, end, duration):
-    #     newPos = start + (end - start) * n

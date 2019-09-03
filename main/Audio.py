@@ -1,3 +1,12 @@
+"""
+Audio.py
+
+contains the class for the song and beat detection that goes on.
+A wav file is taken and spectral flux onset analysis is done to locate beats
+and stored in pickle file so that repeatted analysis doesn't have to be done
+if the game is shut and reopened.
+"""
+
 import collections
 import pickle
 import os
@@ -19,7 +28,7 @@ class Audio(object):
         if self.isStereo():
             self.toMono()
         self.numChunks = int(np.ceil(self.samples.size/self.CHUNK))
-        self.shape = (self.numChunks, self.CHUNK)
+        self.shape = (self.numChunks, self.CHUNK) 
         self.samples.resize(self.shape)
         self.window = np.hamming(self.CHUNK)
         # self.spectrum = self.fftOfSamples()
@@ -60,7 +69,6 @@ class Audio(object):
         return np.round((self.FREQS*self.CHUNK/self.rate))
 
     def getSpectralFlux(self):
-        # flux = np.zeros((self.numChunks, self.CHUNK//2))
         fluxBins = np.zeros((self.numChunks, len(self.FREQS)-1))
         lastSpectrum = np.zeros((self.CHUNK//2,))
         curSpectrum = np.zeros((self.CHUNK//2,))
@@ -77,21 +85,21 @@ class Audio(object):
                     if freq > self.FREQS[j] and freq <= self.FREQS[j+1]:
                         fluxBins[curChunk][j] += diff[i]
                         break 
-            # flux[curChunk] = diff
-        # self.flux = flux
         self.fluxBins = fluxBins
 
     def getFluxAvgs(self):
-        # maxes = [np.max(self.fluxBins[:, i]) for i in range(len(self.fluxBins[0]))]
         for curChunk in range(self.numChunks):
             start = max(0, curChunk - self.historySize)
             end = min(self.numChunks - 1, curChunk + self.historySize)
             for binIndex in range(len(self.fluxBins[0])):
                 self.fluxAvgs[curChunk][binIndex] = \
                     self.THRESHOLD*np.mean(self.fluxBins[start:end, binIndex])
-                    #+  self.THRESHOLD_CONST
         for binIndex in range(len(self.fluxBins[0])):
             self.fluxAvgs[:, binIndex] += np.max(self.fluxAvgs[:, binIndex])/10
+
+    def rectifySpectralFlux(self):
+        neg = self.fluxBins < 0 #find locations where values are negative
+        self.fluxBins[neg] = 0 #set those values equal to 0
 
     def getInstantFluxMinusAvgFlux(self):
         deltaFlux = self.fluxBins - self.fluxAvgs
@@ -112,6 +120,7 @@ class Audio(object):
             self.loadBeatsData()
         else:
             self.getSpectralFlux()
+            self.rectifySpectralFlux()
             self.getFluxAvgs()
             self.getInstantFluxMinusAvgFlux()
             self.findBeatsInFlux()
@@ -173,29 +182,31 @@ class Audio(object):
         return os.path.isfile(self.getDataFileName())
 
     def drawWaveform(self, screen, data,):
-        if data.curIndex < self.samples.shape[0]:
-            x1 = data.width/6
-            x2 = data.width*5/6
-            XRange = np.linspace(x1, x2, self.CHUNK)
+        x1 = data.width/6
+        x2 = data.width*5/6
+        XRange = np.linspace(x1, x2, self.CHUNK)
+        if 0 < data.curIndex < self.samples.shape[0]:
             scale = 500
 
             # Use Savitzky-Golay filter to smoothen values
             # wLen is the length of the window the filter uses
             # polyOrder is the order of the polynomial the filter uses
-            numOfWindowsMinusOne = 5
+            numOfWindowsMinusOne = 15
             wLen = self.CHUNK//numOfWindowsMinusOne-1 # must be odd
-            polyOrder = 1
+            polyOrder = 3
 
 
             samples = -self.samples[data.curIndex]/scale
             samples *= self.window        
-            # samples = sig.savgol_filter(samples, wLen, polyOrder)
-            # samples = sig.savgol_filter(samples, wLen, polyOrder)
+            samples = sig.savgol_filter(samples, wLen, polyOrder)
+            samples = sig.savgol_filter(samples, wLen, polyOrder)
             samples += Player.Player.y
             pointList = [(XRange[i], samples[i]) for i in range(self.CHUNK)]
             
-            pygame.draw.lines(screen, Colors.neonPink, False, pointList, 2)
-
+            pygame.draw.lines(screen, Colors.magenta, False, pointList, 2)
+        else:
+            pointList = [(XRange[i], Player.Player.y) for i in range(self.CHUNK)]
+            pygame.draw.lines(screen, Colors.magenta, False, pointList, 2)
 def main():
     f = 'Music/The SeatBelts - Tank.wav'
     audio = Audio(f)

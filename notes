@@ -1,18 +1,9 @@
-"Acidwax" uses the waveform information to draw dots of color upon a 
-flowing surface of colors, the size of the dots are determined by the 
-level of the music. "Plasmavis" has particles moving in space, one for 
-each frequency. The size of each particle is determined by the level
-of the frequency, however the motion of the particles are determined by 
-combining predefined motion sequences. There are thousands of lines of 
-code to give the visualization variety and nuance, but the basic operation 
-is what I have described.
-
-https://www.reddit.com/r/explainlikeimfive/comments/1l2gof/eli5_how_do_music_visualizers_work/
 
 beat detection algorithm from
 http://archive.gamedev.net/archive/reference/programming/features/beatdetection/index.html
 
-Fonts used: streamster
+Fonts used: more perfect dos vga
+http://laemeur.sdf.org/fonts/
 
 explosion sprite sheet from
 https://mrbubblewand.wordpress.com/

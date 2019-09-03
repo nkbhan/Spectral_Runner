@@ -1,3 +1,9 @@
+"""
+Obstacle.py
+
+contains the class for the obstacles in the game
+"""
+
 import pygame
 import Colors
 
@@ -23,7 +29,6 @@ class Obstacle(pygame.sprite.Sprite):
 
         self.image = pygame.Surface((Obstacle.size, Obstacle.size))
         self.image = self.baseImages[self.lane]
-        # self.image.fill(color)
 
         self.rect = self.get_rect()
 
@@ -43,4 +48,7 @@ class Obstacle(pygame.sprite.Sprite):
     def update(self, data):
         self.updateYPos()
         if self.y > data.height + self.size/2:
+            # if the obstacle is off the screen, the player missed it
+            # so break the scoring streak
+            data.score.breakStreak()
             self.kill()

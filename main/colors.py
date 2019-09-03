@@ -1,6 +1,10 @@
 """
-Colors.py contains colors as rgb values
+Colors.py
+
+contains colors as rgb values and a method to add an alpha
+value to an color: rgb -> rgba
 """
+
 class Colors(object):
     black = (0, 0, 0)
     white = (255, 255, 255)

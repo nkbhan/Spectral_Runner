@@ -1,3 +1,10 @@
+"""
+Track.py
+
+contains the class for the track on which obstacles
+appear in the game
+"""
+
 import pygame
 from Colors import Colors
 import Obstacle
@@ -10,7 +17,7 @@ class Track(object):
         self.bottomRight = (data.width*5/6, data.height)
         self.width = self.topRight[0] - self.topLeft[0]
         self.height = data.height
-        self.color = Colors.neonTeal
+        self.color = Colors.neonBlue
         self.lanes = 3
         self.linesPerLane = 3
         self.lineHeight = data.height/4
